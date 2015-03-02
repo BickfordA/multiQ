@@ -12,7 +12,7 @@ public:
 
 	virtual bool getNextPacket(Packet& packet) = 0;
 
-	bool hasError() { return _errMsg.isEmpty(); }
+	bool hasError() { return _errMsg.empty(); }
 
 protected:
 

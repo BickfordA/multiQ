@@ -11,9 +11,15 @@ double kdeKernel(double x)
 	return 0.9375 * f * f;
 }
 
-Histogram::Histogram(vector<double> values, double kernelWidth, double bucketWidth)
-	: _bucketWidth(bucketWidth), _kernelWidth(kernelWidth)
+Histogram::Histogram()
 {
+}
+
+void Histogram::plotPoints(vector<double> values, double kernelWidth, double bucketWidth)
+{
+
+	_bucketWidth = bucketWidth;
+	_kernelWidth = kernelWidth;
 	assert(!values.empty());
 	//sort the values so that we know where the smallest value is
 	sort(values.begin(), values.end());

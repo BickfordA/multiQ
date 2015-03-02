@@ -5,14 +5,17 @@
 
 #include <vector>
 
+
 //
 // Histogram
 //
-class Histogram : public Distribution
+class Histogram
 {
 public: 
-	Histogram(std::vector<double> values, double width, double bucketWidth = -18.0);
+	Histogram();
 
+	void plotPoints(std::vector<double> values, double width, double bucketWidth = -18.0);
+	
 
 	std::vector<int> modes(double significance, int minPoints);
 

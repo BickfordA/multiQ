@@ -2,32 +2,52 @@
 #define FLOW_H
 
 #include "packet.h"
-
+#include "histogram.h"
 
 #include <string>
 
+
+
 class Flow
 {
-
+	//forward dec..
+	struct Capacity;
 public:
-	Flow();
 
-	void addPacket(Packet nextPacket);
+	enum FlowType { DATA_FLOW, AK_FLOW };
 
+	
+	Flow(std::vector<Packet> packetFlow, FlowType type);
+	
 
-	double flowCapacity();
-
+	std::vector<Capacity> createCapacities(std::vector<double> interArrivalTimes);
 
 
 	bool hasError();
 	std::string errMsg();
+
+
+	struct Capacity
+	{
+		double scale;
+		double ntt;
+
+		double bandwidth;
+
+		double commonBandwidth;
+		const char* commonBandwithName;
+
+		double bandwidth52;
+		const char* commonBandwidth52Name;
+
+		Capacity(FlowType type, double scale, double ntt);
+	};
+
 private:
 
-	Distribution _arrivalDistribution;
-
 	std::string _errMsg();
-
 };
+
 
 
 #endif //FLOW_H
