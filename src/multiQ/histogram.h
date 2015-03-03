@@ -19,8 +19,8 @@ public:
 
 	std::vector<int> modes(double significance, int minPoints);
 
-	double kdeProbability(int bucketIdx);
-	double kdeSigProb(int bucketIdx);
+	double kdeProbability(int bucketIdx) const;
+	double kdeSigProb(int bucketIdx) const;
 
 
 	double pos(int i) const { return _left + i * _bucketWidth; }

@@ -74,12 +74,12 @@ void Histogram::plotPoints(vector<double> values, double kernelWidth, double buc
 	}
 }
 
-double Histogram::kdeProbability(int bucketIdx)
+double Histogram::kdeProbability(int bucketIdx) const
 {
 	return( _buckets[bucketIdx].count / (_totalCount * _kdeWidth));
 }
 
-double Histogram::kdeSigProb(int bucketIdx)
+double Histogram::kdeSigProb(int bucketIdx) const
 {
 	return( sqrt(_buckets[bucketIdx].count) / _totalCount * _kdeWidth);
 }

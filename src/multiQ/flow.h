@@ -44,8 +44,19 @@ public:
 	};
 
 private:
+	
+	
+	
+	std::vector<int> cleanUpTinyModes(vector<int> modes, const Histogram& hist, bool& maxScale, bool& maxScaleAdjusted);
+	double adjustMaxScale( const vector<int > modes, double tallestModeMinScale);
+	
+	
+	std::vector<Capacity> checkForCapacity(std::vector<Capacity>);
+
 
 	std::string _errMsg();
+
+	FlowType _flowType;
 };
 
 

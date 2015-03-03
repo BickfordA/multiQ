@@ -21,6 +21,22 @@ using namespace std;
 #define GAP_MIN_POINTS 2 
 #define MODES_SIMILAR 0.05
 
+
+
+struct ModeProbabilityCompare
+{
+	const Histogram hist;
+	ModeProbabilityCompare(const Histogram & histogram) : hist(histogram) { ; }
+
+	inline bool operator()(int buckIdxA, int buckIdxB)
+	{
+		return hist.kdeProbability(buckIdxA) < hist.kdeProbability(buckIdxB);
+	}
+};
+
+
+
+
 Flow::Flow(vector<Packet> packetFlow, FlowType type)
 {
 	//find the inter arival times
@@ -73,19 +89,54 @@ vector<Flow::Capacity> Flow::createCapacities(vector<double> interarrivalTimes)
 
 
 		//clean up the tiny modes
-
+		modes = cleanUpTinyModes(modes, hist, maxScale, maxScaleAdjusted);
 
 		//check for capacity
-
-
-		//
-
-
+		vector<Flow::Capacity>  capcacities = checkForCapacity(modes);
 
 	}
 
 	
 }
+
+vector<int> Flow::cleanUpTinyModes( vector<int> modes, const Histogram& hist,bool& maxScale, bool& maxScaleAdjusted)
+{
+
+	int max_prob_mode = *std::max_element(modes.begin(), modes.end(), ModeProbabilityCompare(hist));
+
+	// adjust max_scale
+	if (!maxScaleAdjusted) {
+		// If we're looking at acks, then we want to ignore the
+		// leftmost mode when adjusting max_scale.
+		int max_prob_mode2 = max_prob_mode;
+		if (_flowType == AK_FLOW && max_prob_mode == modes[0] && modes.size() > 1)
+			max_prob_mode2 = *std::max_element(modes.begin() + 1, modes.end(), ModeProbabilityCompare(h));
+
+		maxScale = adjustMaxScale( modes, hist.modePos(max_prob_mode2));
+		maxScaleAdjusted = true;
+	}
+
+	double threshold = 0.01 * hist.prob(max_prob_mode);
+	int *out = modes.begin();
+	for (int *x = modes.begin(); x < modes.end(); x++)
+		if (h.prob(*x) >= threshold)
+			*out++ = *x;
+	modes.erase(out, modes.end());
+}
+
+double Flow::adjustMaxScale( const vector<int > modes, double tallestModeMinScale)
+{
+
+
+}
+
+
+
+vector<Flow::Capacity> checkForCapacity(vector<int> modes)
+{
+
+}
+
 
 Flow::Capacity::Capacity(FlowType type, double scale, double ntt)
 	:scale(scale), ntt(ntt)
