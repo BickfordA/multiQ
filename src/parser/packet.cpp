@@ -16,6 +16,7 @@ Packet::Packet(double arrivalTime,
 	)
 	: _arrivalTime(arrivalTime), _source(source), _destination(destination), _protocol(protocol), _length(legnth), _info(info)
 {
+	_streamId = StreamId(source, destination, protocol);
 }
 
 

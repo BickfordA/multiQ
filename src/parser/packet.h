@@ -33,7 +33,12 @@ public:
 	double arrivalTime() const { return _arrivalTime; }
 	double packetSize()const { return _length; }
 
-	StreamId streamId() const { return StreamId(_source, _destination, _protocol); }
+	std::string source() const { return _source; }
+	std::string destination() const { return _destination; }
+	double arrivalTime() const { return _arrivalTime; }
+	Protocol protocol() const { return _protocol; }
+
+	StreamId streamId() const { return _streamId; }
 
 private:
 
@@ -43,6 +48,8 @@ private:
 	Protocol _protocol;
 	int _length;
 	std::string _info;
+
+	StreamId _streamId;
 	
 
 	std::string _originalData;
