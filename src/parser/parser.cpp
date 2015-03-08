@@ -1,30 +1,32 @@
 #include "parser.h"
 #include "packetStream.h"
+#include "resources.h"
 
 #include <iostream>
 #include <sstream>
 #include <algorithm>
 
 using namespace std;
+using namespace PacketProperty;
 
 
-struct streamCompare
-{
-	bool operator() (const PacketStream&  leftPS, const PacketStream& rightPS) const
-	{
-		if (leftPS.source() != rightPS.source()){
-			return leftPS.source() < rightPS.source();
-		}
-		else if (leftPS.destination() != rightPS.destination()){
-			leftPS.destination() < rightPS.destination();
-		}
-		return leftPS.protocol < rightPS.protocol();
-	};
-};
+//struct streamCompare
+//{
+//	bool operator() (const PacketStream&  leftPS, const PacketStream& rightPS) const
+//	{
+//		if (leftPS.source() != rightPS.source()){
+//			return leftPS.source() < rightPS.source();
+//		}
+//		else if (leftPS.destination() != rightPS.destination()){
+//			leftPS.destination() < rightPS.destination();
+//		}
+//		return leftPS.protocol < rightPS.protocol();
+//	};
+//};
 
 Parser::Parser()
 {
-
+	_inputFile = NULL;
 }
 
 Parser::~Parser()
@@ -50,6 +52,16 @@ bool Parser::openFile(string filePath)
 	}
 
 	return true;
+}
+
+PacketStream Parser::getStream(std::string source, std::string destination, std::string protocol)
+{
+
+	Protocol filterProtocol = stringToProtocol(protocol);
+
+	StreamId query(source, destination, filterProtocol);
+
+	return _packetStreams[query];
 }
 
 bool Parser::loadFile()
@@ -120,7 +132,7 @@ bool Parser::parseLine(const string& line, Packet& parsedPacket, string& err)
 
 
 	//next is the Protocol of the packet
-	Packet::Protocol protocol = stringToProtocol(lineValues.front());
+	Protocol protocol = stringToProtocol(lineValues.front());
 	lineValues.pop_front();
 
 
@@ -133,26 +145,27 @@ bool Parser::parseLine(const string& line, Packet& parsedPacket, string& err)
 	string info = lineValues.front();
 
 	parsedPacket = Packet(arrivalTime, source, destination, protocol, length, info);
+	return true;
 }
 
-Packet::Protocol Parser::stringToProtocol(string protocolString)
+Protocol Parser::stringToProtocol(string protocolString)
 {
 	std::transform(protocolString.begin(), protocolString.end(), protocolString.begin() , ::toupper);
 
 	if (protocolString == "TCP"){
-		return Packet::TCP;
+		return TCP;
 	}
 
 	if (protocolString == "HTTP"){
-		return Packet::HTTP;
+		return HTTP;
 	}
 
 	if (protocolString == "UDP"){
-		return Packet::UDP;
+		return UDP;
 	}
 
 
-	return Packet::UNKNOWN;
+	return UNKNOWN;
 }
 
 list<string> Parser::spiltLine(const string value, char delimiter)
@@ -173,6 +186,6 @@ void Parser::unquotify(string& stringValue)
 	if (stringValue.size())
 		stringValue.erase(0, 1);
 	if (stringValue.size())
-		stringValue.erase(stringValue.size() - 2, 1);
+		stringValue.erase(stringValue.size() - 1, 1);
 
 }

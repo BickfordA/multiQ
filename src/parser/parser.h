@@ -2,6 +2,7 @@
 #define PARSER_H
 
 #include "packet.h"
+#include "packetStream.h"
 
 #include <string>
 #include <fstream>
@@ -20,7 +21,7 @@ struct streamCompare
 		else if (leftPS.destination() != rightPS.destination()){
 			leftPS.destination() < rightPS.destination();
 		}
-		return leftPS.protocol < rightPS.protocol();
+		return leftPS.protocol() < rightPS.protocol();
 	};
 };
 
@@ -31,20 +32,20 @@ public:
 	Parser();
 	~Parser();
 
+	PacketStream getStream(std::string source, std::string destination, std::string protocol);
+
 	bool openFile(std::string filePath);
 	bool loadFile();
 
-
-
 	bool hasError() { return _errMsg.empty(); }
-	std::string errMsg();
+	std::string errMsg() { return _errMsg; }
 
 protected:
 	bool parseLine(const std::string& line, Packet& parsedPacket, std::string& errMsg);
 
 	std::list<std::string> spiltLine(const std::string value, char delimiter);
 	
-	Packet::Protocol stringToProtocol(std::string protocolString);
+	PacketProperty::Protocol stringToProtocol(std::string protocolString);
 
 	void unquotify(std::string& stringValue);
 
@@ -59,4 +60,4 @@ protected:
 
 
 
-#endif PARSER_H
+#endif// PARSER_H

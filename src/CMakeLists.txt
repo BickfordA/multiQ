@@ -7,7 +7,7 @@ add_subdirectory(multiQ)
 
 add_executable( mq MainDriver.cpp)
 
-target_link_libraries(mq parser)
+target_link_libraries(mq csvParser )
 target_link_libraries(mq multiQ)
 
 install(TARGETS mq DESTINATION bin)

@@ -1,5 +1,7 @@
 #include "packet.h"
 
+using namespace std;
+using namespace PacketProperty;
 
 Packet::Packet()
 	:_arrivalTime(-1), _protocol(UNKNOWN), _length(-1)
@@ -8,11 +10,11 @@ Packet::Packet()
 }
 
 Packet::Packet(double arrivalTime,
-	std::string source,
-	std::string destination,
+	string source,
+	string destination,
 	Protocol protocol,
 	int legnth,
-	std::string info
+	string info
 	)
 	: _arrivalTime(arrivalTime), _source(source), _destination(destination), _protocol(protocol), _length(legnth), _info(info)
 {

@@ -5,6 +5,7 @@
 #include "histogram.h"
 
 #include <string>
+#include <vector>
 
 #define NUMBER_OF_BANDWIDTH_SPECS 10
 
@@ -36,26 +37,13 @@ static const BandwidthSpec *closestCommonBandwidthSpec(double bandwidth)
 		if (bw->range_lo < bandwidth && bandwidth < bw->range_hi)
 			return bw;
 	return 0;
-}
+};
 
 class Flow
 {
-	//forward dec..
-	struct Capacity;
 public:
 
 	enum FlowType { DATA_FLOW, AK_FLOW };
-
-	
-	Flow(std::vector<Packet> packetFlow, FlowType type);
-	
-
-	std::vector<Capacity> createCapacities(std::vector<double> interArrivalTimes);
-
-
-	bool hasError();
-	std::string errMsg();
-
 
 	struct Capacity
 	{
@@ -73,16 +61,26 @@ public:
 		Capacity(FlowType type, double scale, double ntt);
 	};
 
+	Flow(std::vector<double> arrivalTimes, FlowType type);
+	std::vector<Capacity> createCapacities(std::vector<double> interArrivalTimes);
+
+
+	std::vector<Capacity> getCapacities() { return _capacities; }
+
+	bool hasError();
+	std::string errMsg();
+
 private:
 	
 	
 	
-	std::vector<int> cleanUpTinyModes(vector<int> modes, 
-									const Histogram& hist, 
-									double& maxScale, 
-									bool& maxScaleAdjusted);
+	void cleanUpTinyModes(std::vector<int>& modes, 
+						const std::vector<double>& aTimes,
+						const Histogram& hist, 
+						double& maxScale, 
+						bool& maxScaleAdjusted);
 
-	double adjustMaxScale( const vector<int > modes, double tallestModeMinScale);
+	double adjustMaxScale( const std::vector<double > modes, double tallestModeMinScale);
 	
 	
 	void checkForCapacity(std::vector<int> modes, 
@@ -90,15 +88,17 @@ private:
 							double& lastNtt, 
 							double& scale, 
 							const Histogram& hist,  
-							vector<Flow::Capacity>& capacities);
+							std::vector<Flow::Capacity>& capacities);
 
-	double modes2NTT(const Histogram hist, const vector<int>& modes) const;
+	double modes2NTT(const Histogram hist, const std::vector<int>& modes) const;
 
-	void filterCapacity(vector<Flow::Capacity>& capacities);
+	void filterCapacity(std::vector<Flow::Capacity>& capacities);
 
 	std::string _errMsg();
 
 	FlowType _flowType;
+
+	std::vector<Capacity> _capacities;
 };
 
 

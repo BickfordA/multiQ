@@ -39,18 +39,16 @@ struct ModeProbabilityCompare
 
 
 
-Flow::Flow(vector<Packet> packetFlow, FlowType type)
+Flow::Flow(vector<double> arrivalTimes, FlowType type)
 {
-	//find the inter arival times
-	vector<double> interarrivalTimes;
-
 	//sort the interarival times
-	sort(interarrivalTimes.begin(), interarrivalTimes.end());
+	sort(arrivalTimes.begin(), arrivalTimes.end());
 
-	vector<Flow::Capacity> capacities = createCapacities(interarrivalTimes);
+	vector<Flow::Capacity> capacities = createCapacities(arrivalTimes);
 
 	filterCapacity(capacities);
 
+	_capacities = capacities;
 }
 
 
@@ -91,7 +89,7 @@ vector<Flow::Capacity> Flow::createCapacities(vector<double> interarrivalTimes)
 
 
 		//clean up the tiny modes
-		modes = cleanUpTinyModes(modes, hist, maxScale, maxScaleAdjusted);
+		cleanUpTinyModes(modes, interarrivalTimes, hist, maxScale, maxScaleAdjusted);
 
 		//check for capacity
 		checkForCapacity(modes, lastNModes, lastNTT, scale, hist, capacities);
@@ -100,7 +98,7 @@ vector<Flow::Capacity> Flow::createCapacities(vector<double> interarrivalTimes)
 	return capacities;
 }
 
-vector<int> Flow::cleanUpTinyModes( vector<int> modes, const Histogram& hist,double& maxScale, bool& maxScaleAdjusted)
+void Flow::cleanUpTinyModes( vector<int>& modes, const vector<double>& aTimes , const Histogram& hist,double& maxScale, bool& maxScaleAdjusted)
 {
 
 	int max_prob_mode = *std::max_element(modes.begin(), modes.end(), ModeProbabilityCompare(hist));
@@ -113,7 +111,7 @@ vector<int> Flow::cleanUpTinyModes( vector<int> modes, const Histogram& hist,dou
 		if (_flowType == AK_FLOW && max_prob_mode == modes[0] && modes.size() > 1)
 			max_prob_mode2 = *std::max_element(modes.begin() + 1, modes.end(), ModeProbabilityCompare(hist));
 
-		maxScale = adjustMaxScale( modes, hist.modePos(max_prob_mode2));
+		maxScale = adjustMaxScale(aTimes, hist.modePos(max_prob_mode2));
 		maxScaleAdjusted = true;
 	}
 
@@ -128,6 +126,25 @@ vector<int> Flow::cleanUpTinyModes( vector<int> modes, const Histogram& hist,dou
 }
 
 
+double Flow::adjustMaxScale(const std::vector<double> modes, double tallestModeMinScale)
+{
+	double next_scale = tallestModeMinScale / 2.;
+
+	Histogram hh;
+	hh.plotPoints(modes, next_scale);
+
+	vector<int> next_modes = hh.modes(SIGNIFICANCE, MIN_POINTS);
+
+	// Ignore the leftmost mode if we're looking at acks.
+	vector<int>::iterator next_modes_start = next_modes.begin();
+	if (_flowType == AK_FLOW && next_modes_start < next_modes.end())
+		next_modes_start++;
+
+	vector<int>::iterator tallest_ptr = std::max_element(next_modes_start, next_modes.end(), ModeProbabilityCompare(hh));
+	double tallest_mode_next_scale = (tallest_ptr < next_modes.end() ? hh.modePos(*tallest_ptr) : -1);
+
+	return std::min(std::max(tallestModeMinScale, tallest_mode_next_scale),(double) MAX_SCALE);
+}
 
 
 void Flow::checkForCapacity(vector<int> modes, 
@@ -138,7 +155,7 @@ void Flow::checkForCapacity(vector<int> modes,
 							vector<Flow::Capacity>& capacities)
 {
 	// check for capacity
-	if (modes.size() > lastNModes) {
+	if ((int)modes.size() > lastNModes) {
 		// skip if number of modes is increasing (odd behavior)
 		scale *= SCALE_STEP;
 
