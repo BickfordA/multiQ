@@ -2,25 +2,27 @@
 
 
 Packet::Packet()
+	:_arrivalTime(-1), _protocol(UNKNOWN), _length(-1)
 {
-	//TODO construct a packet
+	//default constructor;
 }
+
+Packet::Packet(double arrivalTime,
+	std::string source,
+	std::string destination,
+	Protocol protocol,
+	int legnth,
+	std::string info
+	)
+	: _arrivalTime(arrivalTime), _source(source), _destination(destination), _protocol(protocol), _length(legnth), _info(info)
+{
+}
+
 
 double Packet::interarrivalTime(const Packet& other) const
 {
-	//TODO: compare the arrival time of the two packets
-	// and output the difference in milliseconds
-	return -1;
-}
-
-double Packet::arrivalTime()
-{
-	//TODO: need to decide how to format this for comparison
-	return -1;
-}
-
-double Packet::packetSize()
-{
-	//TODO: this seems important
-	return -1;
+	if (other.arrivalTime() > _arrivalTime){
+		return other.arrivalTime() - _arrivalTime;
+	}
+	return _arrivalTime - other.arrivalTime();
 }

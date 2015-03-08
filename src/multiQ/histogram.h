@@ -5,6 +5,24 @@
 
 
 //
+// Bucket 
+// - holds the intervals of the histogram
+//
+
+struct Bucket
+{
+	Bucket(int start, int stop, int count)
+		:start(start), stop(stop), count(count)
+	{
+	};
+
+	double start;
+	double stop;
+
+	int count;
+};
+
+//
 // Histogram
 //
 class Histogram
@@ -38,24 +56,6 @@ protected:
 	double _kernelWidth;
 
 	double _left; //value of left edge of smallest bucket
-};
-
-//
-// Bucket 
-// - holds the intervals of the histogram
-//
-
-struct Bucket
-{
-	Bucket(int start, int stop, int count)
-		:start(start), stop(stop), count(count)
-	{
-	};
-
-	double start;
-	double stop;
-
-	int count;
 };
 
 
