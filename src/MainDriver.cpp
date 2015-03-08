@@ -1,4 +1,9 @@
 
+#include "parser.h"
+#include "packetStream.h"
+#include "flow.h"
+
+
 #include "stdio.h"
 #include <iostream>
 #include <fstream>
@@ -15,28 +20,42 @@ using namespace std;
 
 int main(int argc, char* argv[])
 {
-	if (argc != 2){
-		fprintf(stdout, "Incorrect number of arguments");
-		fprintf(stdout, "Correct syntax: \"mp <filename>\"");
+	if (argc != 5){
+		fprintf(stdout, "Incorrect number of arguments\n");
+		fprintf(stdout, "Correct syntax: \"mp <filename>  <sourceIPAddress> <destinationIPaddress> <protocol>\n");
 		return 1;
 	}
-
-	ifstream inputFile(argv[1]);
-	//just do this to make sure that is a valid file
-	//the scanner will be responsible for it's own  file pointer
-
-	if (!inputFile.is_open()){
-		fprintf(stdout, "Could not open file!!! \nCheck the path and try again");
-		return 1;
-	}
-	inputFile.close();
 
 	//Pass the file name to the parser
 
+	Parser* inputParser = new Parser();
+
+	inputParser->openFile(argv[1]);
+	if (inputParser->hasError()){
+		fprintf(stdout, inputParser->errMsg().c_str());
+		return 1;
+	}
+
 	//read all of the packets from the file
+	fprintf(stdout, "Loading streams...\n");
+	inputParser->loadFile();
+	if (inputParser->hasError()){
+		fprintf(stdout, inputParser->errMsg().c_str());
+		return 1;
+	}
+
+	//check if there is a flow corresponding to the parameters
+	PacketStream selectedStream = inputParser->getStream(string(argv[2]), string(argv[3]), string(argv[4]));
+	vector<double> arrivalTime = selectedStream.calculateInterarrivalTimes();
 
 	//pass the packets to multiq
+	Flow multiQFlow(arrivalTime, Flow::DATA_FLOW);
 
 	//get calculations from multiQ
+	vector<Flow::Capacity> capacities = multiQFlow.getCapacities();
 
+
+
+
+	delete inputParser;
 }

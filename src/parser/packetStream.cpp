@@ -3,6 +3,8 @@
 #include <algorithm>
 
 
+using namespace std;
+
 struct packetArivalComparer
 {
 	bool operator() (Packet a, Packet b)
@@ -20,14 +22,22 @@ void PacketStream::appendPacket(Packet newPacket)
 	_packetStream.push_back(newPacket);
 }
 
-Packet PacketStream::firstPacket()
+vector<double> PacketStream::calculateInterarrivalTimes()
 {
-	Packet next = _packetStream.front();
-	_packetStream.pop_front();
-	return next;
-}
-
-void PacketStream::sortPackets()
-{
+	//this is probably unnessesary
 	sort(_packetStream.begin(), _packetStream.end(), arrivalCompare);
+
+	vector<double> interarrivalTimes;
+
+	if (_packetStream.size() < 2){
+		return interarrivalTimes;
+	}
+
+	Packet previousPacket = _packetStream.front();
+	for (int i = 1; i < (int) _packetStream.size(); i++){
+		interarrivalTimes.push_back(previousPacket.interarrivalTime(_packetStream[i]));
+		previousPacket = _packetStream[i];
+	}
+
+	return interarrivalTimes;
 }
