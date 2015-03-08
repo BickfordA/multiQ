@@ -5,11 +5,13 @@
 #include <algorithm>
 #include <vector>
 
+#include <assert.h>
+
 using namespace std;
 
 //This should be set to a value that cut off 
 // spaces between packets that are unreasonably large
-#define INTERARRIVAL_CUTTOFF 35000
+#define INTERARRIVAL_CUTOFF 35000
 
 #define MIN_SCALE 10
 #define MAX_SCALE 10000
@@ -42,13 +44,12 @@ Flow::Flow(vector<Packet> packetFlow, FlowType type)
 	//find the inter arival times
 	vector<double> interarrivalTimes;
 
-
-
 	//sort the interarival times
 	sort(interarrivalTimes.begin(), interarrivalTimes.end());
 
+	vector<Flow::Capacity> capacities = createCapacities(interarrivalTimes);
 
-	
+	filterCapacity(capacities);
 
 }
 
@@ -56,9 +57,10 @@ Flow::Flow(vector<Packet> packetFlow, FlowType type)
 
 vector<Flow::Capacity> Flow::createCapacities(vector<double> interarrivalTimes)
 {
-	
+	vector<Flow::Capacity> capacities;
+
 	//remove the values which are too big
-	while (interarrivalTimes.back() > INTERARRIVAL_CUTTOFF){
+	while (interarrivalTimes.back() > INTERARRIVAL_CUTOFF){
 		interarrivalTimes.pop_back();
 	}
 
@@ -92,14 +94,13 @@ vector<Flow::Capacity> Flow::createCapacities(vector<double> interarrivalTimes)
 		modes = cleanUpTinyModes(modes, hist, maxScale, maxScaleAdjusted);
 
 		//check for capacity
-		vector<Flow::Capacity>  capcacities = checkForCapacity(modes);
-
+		checkForCapacity(modes, lastNModes, lastNTT, scale, hist, capacities);
 	}
 
-	
+	return capacities;
 }
 
-vector<int> Flow::cleanUpTinyModes( vector<int> modes, const Histogram& hist,bool& maxScale, bool& maxScaleAdjusted)
+vector<int> Flow::cleanUpTinyModes( vector<int> modes, const Histogram& hist,double& maxScale, bool& maxScaleAdjusted)
 {
 
 	int max_prob_mode = *std::max_element(modes.begin(), modes.end(), ModeProbabilityCompare(hist));
@@ -110,36 +111,179 @@ vector<int> Flow::cleanUpTinyModes( vector<int> modes, const Histogram& hist,boo
 		// leftmost mode when adjusting max_scale.
 		int max_prob_mode2 = max_prob_mode;
 		if (_flowType == AK_FLOW && max_prob_mode == modes[0] && modes.size() > 1)
-			max_prob_mode2 = *std::max_element(modes.begin() + 1, modes.end(), ModeProbabilityCompare(h));
+			max_prob_mode2 = *std::max_element(modes.begin() + 1, modes.end(), ModeProbabilityCompare(hist));
 
 		maxScale = adjustMaxScale( modes, hist.modePos(max_prob_mode2));
 		maxScaleAdjusted = true;
 	}
 
-	double threshold = 0.01 * hist.prob(max_prob_mode);
-	int *out = modes.begin();
-	for (int *x = modes.begin(); x < modes.end(); x++)
-		if (h.prob(*x) >= threshold)
-			*out++ = *x;
-	modes.erase(out, modes.end());
-}
-
-double Flow::adjustMaxScale( const vector<int > modes, double tallestModeMinScale)
-{
+	double threshold = 0.01 * hist.probability(max_prob_mode);
 
 
+	vector<int>::iterator outEnd = modes.begin();
+	for (vector<int>::iterator x = modes.begin(); x < modes.end(); x++)
+		if (hist.probability(*x) >= threshold)
+			*outEnd++ = *x;
+	modes.erase(outEnd, modes.end());
 }
 
 
 
-vector<Flow::Capacity> checkForCapacity(vector<int> modes)
-{
 
+void Flow::checkForCapacity(vector<int> modes, 
+							int& lastNModes, 
+							double& lastNtt, 
+							double& scale, 
+							const Histogram& hist,  
+							vector<Flow::Capacity>& capacities)
+{
+	// check for capacity
+	if (modes.size() > lastNModes) {
+		// skip if number of modes is increasing (odd behavior)
+		scale *= SCALE_STEP;
+
+	}
+	else if (modes.size() == 1) {
+		// output this final mode, if it's significantly different from
+		// last capacity mode
+		double ntt = hist.modePos(modes[0]);
+		if ((ntt - lastNtt) / (ntt + lastNtt) > MODES_SIMILAR)
+			capacities.push_back(Capacity(_flowType, scale, ntt));
+		return;
+
+	}
+	else if (modes.size() == 2 && scale < MAX_SCALE / 4) {
+		// try and resolve two modes into one if at a smallish scale
+		scale *= SCALE_STEP;
+
+	}
+	else if (modes.size() == 2) {
+		// end if two modes at a large scale
+		// output a heuristic combination of the modes
+		double x1 = hist.modePos(modes[0]), h1 = hist.probability(modes[0]);
+		double x2 = hist.modePos(modes[1]), h2 = hist.probability(modes[1]);
+
+		// first mode if it is pretty large probability
+		if (h1 > 0.25*h2
+			&& (x1 - lastNtt) / (x1 + lastNtt) > MODES_SIMILAR) {
+			capacities.push_back(Flow::Capacity(_flowType, scale, x1));
+			lastNtt = x1;
+		}
+
+		// second mode if it is very large probability; or it is
+		// relatively large probability, and at a distance, but not
+		// extremely far away
+		double relative_dist = (x2 - x1) / x1;
+		if ((h2 > 2 * h1	// very large probability
+			|| (h2 > 0.7*h1 // large probability
+			&& !(0.985 < relative_dist && relative_dist < 1.015)
+			// at a distance
+			&& (x2 - x1) < 3 * x1)) // not extremely far away
+			&& (x2 - lastNtt) / (x2 + lastNtt) > MODES_SIMILAR) {
+			capacities.push_back(Capacity(_flowType , scale, x2));
+		}
+
+		return;
+
+	}
+	else {
+		double ntt = modes2NTT(hist, modes);
+		if (ntt >= 0 && (ntt - lastNtt) / (ntt + lastNtt) > MODES_SIMILAR) {
+			capacities.push_back(Capacity(_flowType, scale, ntt));
+			lastNtt = ntt;
+			scale = std::max(ntt, scale) * SCALE_STEP;
+		}
+		else
+			scale *= SCALE_STEP;
+	}
+}
+
+double Flow::modes2NTT(const Histogram hist, const vector<int>& modes) const
+{
+	vector<double> gaps;
+
+	double last_x = 0;		// insert artificial mode at 0
+	double min_gap = 1e15;
+
+	// Ignore the leftmost mode if we're looking at acks
+	vector<int>::const_iterator modes_begin = modes.begin();
+	if (_flowType == AK_FLOW)
+		last_x = hist.modePos(*modes_begin), modes_begin++;
+
+	for (vector<int>::const_iterator m = modes_begin; m < modes.end(); m++) {
+		double x = hist.modePos(*m);
+		if (x >= 0) {
+			double gap = x - last_x;
+			int n = (int)(hist.probability(*m) * 1000);
+			gaps.resize(gaps.size() + n, gap);
+			min_gap = std::min(gap, min_gap);
+			last_x = x;
+		}
+	}
+
+	if (gaps.size() == 0)
+		return -1;
+
+	std::sort(gaps.begin(), gaps.end());
+	assert(gaps.back() < INTERARRIVAL_CUTOFF);
+
+	Histogram gap_h;
+	gap_h.plotPoints(gaps, 0.4*min_gap);
+
+	vector<int> gap_modes = gap_h.modes(GAP_SIGNIFICANCE, GAP_MIN_POINTS);
+
+	// if the first mode in the list is tallest, return it
+	if (gap_modes.size() >= 1
+		&& std::max_element(gap_modes.begin(), gap_modes.end(), ModeProbabilityCompare(gap_h)) == gap_modes.begin())
+		return gap_h.modePos(gap_modes[0]);
+	else
+		return -1;
+
+}
+
+void Flow::filterCapacity(vector<Flow::Capacity>& capacities)
+{
+	std::reverse(capacities.begin(), capacities.end());
+	bool flag = false;
+	double lastBandwidth = 0;
+	vector<Flow::Capacity>::iterator out = capacities.begin();
+	for (vector<Flow::Capacity>::iterator n = capacities.begin(); n < capacities.end(); n++) {
+		if (30 < n->ntt && n->ntt < 46 && flag)
+			continue;
+		if ((100 < n->ntt && n->ntt < 170)
+			|| (950 < n->ntt && n->ntt < 1350))
+			flag = true;
+		if (n->ntt > n->scale && n->commonBandwidth != lastBandwidth) {
+			*out++ = *n;
+			lastBandwidth = n->commonBandwidth;
+		}
+	}
+	capacities.erase(out, capacities.end());
 }
 
 
 Flow::Capacity::Capacity(FlowType type, double scale, double ntt)
 	:scale(scale), ntt(ntt)
 {
-	//TODO: there is some interesting logic here in the original method
+	if (type == DATA_FLOW)
+		bandwidth = 1500 * 8 / ntt, commonbandwidth52 = 52 * 8 / ntt;
+	else
+		bandwidth = 1552 * 8 / ntt, commonbandwidth52 = 52 * 8 / ntt;
+
+	if (const BandwidthSpec *bw = closestCommonBandwidthSpec(bandwidth)) {
+		commonBandwidth = bw->bandwidth;
+		commonBandwithName= bw->name;
+	}
+	else {
+		commonBandwidth = bandwidth;
+		commonBandwithName= "?";
+	}
+	if (const BandwidthSpec *bw = closestCommonBandwidthSpec(commonbandwidth52)) {
+		commonbandwidth52 = bw->bandwidth;
+		commonBandwidth52Name= bw->name;
+	}
+	else {
+		commonbandwidth52 = commonbandwidth52;
+		commonBandwidth52Name = "?";
+	}
 }

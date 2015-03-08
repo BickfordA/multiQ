@@ -175,3 +175,8 @@ vector<int> Histogram::modes(double significance, int minPoints)
 
 	return modeBucketIdx;
 }
+
+double Histogram::probability(int bucket) const
+{
+	return (double)_buckets[bucket].count / _totalCount;
+}

@@ -1,8 +1,6 @@
 #ifndef HISTOGRAM_H
 #define HISTOGRAM_H
 
-#include "distribution.h"
-
 #include <vector>
 
 
@@ -17,6 +15,7 @@ public:
 	void plotPoints(std::vector<double> values, double width, double bucketWidth = -18.0);
 	
 
+
 	std::vector<int> modes(double significance, int minPoints);
 
 	double kdeProbability(int bucketIdx) const;
@@ -24,6 +23,10 @@ public:
 
 
 	double pos(int i) const { return _left + i * _bucketWidth; }
+
+	double modePos(int i) const { return pos(i); }
+	double probability(int bucket) const;
+	
 protected:
 
 	std::vector<Bucket> _buckets;
