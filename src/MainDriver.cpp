@@ -48,6 +48,10 @@ int main(int argc, char* argv[])
 	PacketStream selectedStream = inputParser->getStream(string(argv[2]), string(argv[3]), string(argv[4]));
 	vector<double> arrivalTime = selectedStream.calculateInterarrivalTimes();
 
+	if (arrivalTime.empty()){
+		fprintf(stdout, "This selected stream was empty.\n");
+	}
+
 	//pass the packets to multiq
 	Flow multiQFlow(arrivalTime, Flow::DATA_FLOW);
 
@@ -58,4 +62,5 @@ int main(int argc, char* argv[])
 
 
 	delete inputParser;
+
 }

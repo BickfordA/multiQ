@@ -28,7 +28,11 @@ void Histogram::plotPoints(vector<double> values, double kernelWidth, double buc
 		_bucketWidth = _kernelWidth / -_bucketWidth;
 
 
-	_left = values[0] - kernelWidth - 1.5 * bucketWidth;
+	_left = values[0] - kernelWidth - 1.5 * _bucketWidth;
+	if (_left > values[0]){
+		//check for underflow
+		_left = 0;
+	}
 
 	int bucketCount = (int)((values[values.size() - 1] + kernelWidth + 1.5* bucketWidth - _left) / bucketWidth) + 3; //why three? start stop and ??? middle???
 
@@ -50,7 +54,7 @@ void Histogram::plotPoints(vector<double> values, double kernelWidth, double buc
 	for (int i = 1; i < bucketCount; i++)
 	{
 		//find the bucket bound in the input vector
-		double buckPos = _left + (i  * _bucketWidth);
+		double buckPos = modePos(i);
 		
 		double currentStart = buckPos - _kernelWidth;
 		double currentStop = buckPos + _kernelWidth;
@@ -99,7 +103,7 @@ vector<int> Histogram::modes(double significance, int minPoints)
 
 	vector<Mode> potentialMode;
 
-	for (int buckIdx = 0; buckIdx < _buckets.size(); buckIdx){
+	for (int buckIdx = 0; buckIdx < _buckets.size(); buckIdx ++){
 		//find the left hand neighbor value
 		double leftDelta = (buckIdx == 0) ? -1 : _buckets[buckIdx - 1].count - _buckets[buckIdx].count;
 		

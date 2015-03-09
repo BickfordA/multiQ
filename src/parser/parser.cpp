@@ -75,9 +75,15 @@ bool Parser::loadFile()
 	int lineCount = 0;
 	char buffer[1024];
 
+
+	_inputFile->seekg(0, ios::end);
+	unsigned int size = (unsigned int)_inputFile->tellg();
+	_inputFile->seekg(0);
+
 	//skip the titles
 	_inputFile->getline(buffer, sizeof(buffer));
-
+	
+	int pos = 0;
 	while (!_inputFile->eof()){
 		_inputFile->getline(buffer, sizeof(buffer));
 		lineCount++;
@@ -93,8 +99,17 @@ bool Parser::loadFile()
 			continue;
 		}
 
+		unsigned long currentpos = (unsigned long)_inputFile->tellg() * 100 / size ;
+
+		if (currentpos != pos && (currentpos % 10) == 0){
+			pos = currentpos;
+			fprintf(stdout, to_string(pos).c_str() );
+			fprintf(stdout, "%\n");
+		}
+
 		_packetStreams[nextPacket.streamId()].appendPacket(nextPacket);
 	}
+
 
 	return true;
 }
