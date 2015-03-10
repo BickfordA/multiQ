@@ -34,7 +34,8 @@ void Histogram::plotPoints(vector<double> values, double kernelWidth, double buc
 		_left = 0;
 	}
 
-	int bucketCount = (int)((values[values.size() - 1] + kernelWidth + 1.5* bucketWidth - _left) / bucketWidth) + 3; //why three? start stop and ??? middle???
+	vector<double>::iterator valIt = values.end();
+	int bucketCount = (int)((valIt[- 1] + _kernelWidth + 1.5* _bucketWidth - _left) / _bucketWidth) + 3; //why three? start stop and ??? middle???
 
 	_totalCount = values.size();
 
@@ -59,11 +60,11 @@ void Histogram::plotPoints(vector<double> values, double kernelWidth, double buc
 		double currentStart = buckPos - _kernelWidth;
 		double currentStop = buckPos + _kernelWidth;
 
-		while (values[startBin] < currentStart && startBin < values.size()){
+		while (startBin < values.size() ? values[startBin] < currentStart : false){
 			startBin++;
 		}
 
-		while (values[stopBin] < currentStart && stopBin< values.size()){
+		while (stopBin< values.size() ? values[stopBin] < currentStop : false){
 			stopBin ++;
 		}
 
@@ -80,12 +81,12 @@ void Histogram::plotPoints(vector<double> values, double kernelWidth, double buc
 
 double Histogram::kdeProbability(int bucketIdx) const
 {
-	return( _buckets[bucketIdx].count / (_totalCount * _kdeWidth));
+	return(_buckets[bucketIdx].count / (_totalCount * _kernelWidth));
 }
 
 double Histogram::kdeSigProb(int bucketIdx) const
 {
-	return( sqrt(_buckets[bucketIdx].count) / _totalCount * _kdeWidth);
+	return(sqrt(_buckets[bucketIdx].count) / _totalCount * _kernelWidth);
 }
 /*
 * A mode is the highest point in any region statistically more likely than one before it

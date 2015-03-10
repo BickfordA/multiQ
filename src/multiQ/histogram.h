@@ -50,7 +50,6 @@ protected:
 	std::vector<Bucket> _buckets;
 
 	double _totalCount;
-	double _kdeWidth;
 
 	double _bucketWidth;
 	double _kernelWidth;

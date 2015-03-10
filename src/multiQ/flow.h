@@ -83,7 +83,7 @@ private:
 	double adjustMaxScale( const std::vector<double > modes, double tallestModeMinScale);
 	
 	
-	void checkForCapacity(std::vector<int> modes, 
+	bool checkForCapacity(std::vector<int> modes, 
 							int& lastNModes, 
 							double& lastNtt, 
 							double& scale, 

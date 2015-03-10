@@ -13,7 +13,7 @@ using namespace std;
 // spaces between packets that are unreasonably large
 #define INTERARRIVAL_CUTOFF 35000
 
-#define MIN_SCALE 10 //old default 10 
+#define MIN_SCALE 1 //old default 10 
 #define MAX_SCALE 10000
 #define SCALE_STEP 1.1
 #define SCALE_STEP_NOMODES 1.5
@@ -75,7 +75,8 @@ vector<Flow::Capacity> Flow::createCapacities(vector<double> interarrivalTimes)
 	double lastNTT = 0;
 
 	double scale = MIN_SCALE;
-	while (scale < maxScale){
+	bool done = false;
+	while (scale < maxScale && !done){
 		//compute the kernel PDF
 		Histogram hist;
 		hist.plotPoints(interarrivalTimes, scale);
@@ -94,7 +95,7 @@ vector<Flow::Capacity> Flow::createCapacities(vector<double> interarrivalTimes)
 		cleanUpTinyModes(modes, interarrivalTimes, hist, maxScale, maxScaleAdjusted);
 
 		//check for capacity
-		checkForCapacity(modes, lastNModes, lastNTT, scale, hist, capacities);
+		done = checkForCapacity(modes, lastNModes, lastNTT, scale, hist, capacities);
 	}
 
 	return capacities;
@@ -149,7 +150,7 @@ double Flow::adjustMaxScale(const std::vector<double> modes, double tallestModeM
 }
 
 
-void Flow::checkForCapacity(vector<int> modes, 
+bool Flow::checkForCapacity(vector<int> modes, 
 							int& lastNModes, 
 							double& lastNtt, 
 							double& scale, 
@@ -168,7 +169,7 @@ void Flow::checkForCapacity(vector<int> modes,
 		double ntt = hist.modePos(modes[0]);
 		if ((ntt - lastNtt) / (ntt + lastNtt) > MODES_SIMILAR)
 			capacities.push_back(Capacity(_flowType, scale, ntt));
-		return;
+		return true;
 
 	}
 	else if (modes.size() == 2 && scale < MAX_SCALE / 4) {
@@ -202,7 +203,7 @@ void Flow::checkForCapacity(vector<int> modes,
 			capacities.push_back(Capacity(_flowType , scale, x2));
 		}
 
-		return;
+		return true;
 
 	}
 	else {
@@ -215,6 +216,7 @@ void Flow::checkForCapacity(vector<int> modes,
 		else
 			scale *= SCALE_STEP;
 	}
+	return false;
 }
 
 double Flow::modes2NTT(const Histogram hist, const vector<int>& modes) const
