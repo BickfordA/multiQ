@@ -13,7 +13,7 @@ using namespace std;
 // spaces between packets that are unreasonably large
 #define INTERARRIVAL_CUTOFF 35000
 
-#define MIN_SCALE 1 //old default 10 
+#define MIN_SCALE .01 //old default 10 
 #define MAX_SCALE 10000
 #define SCALE_STEP 1.1
 #define SCALE_STEP_NOMODES 1.5
@@ -40,6 +40,7 @@ struct ModeProbabilityCompare
 
 
 Flow::Flow(vector<double> arrivalTimes, FlowType type)
+:_flowType(type)
 {
 	fprintf(stdout, "Sorting the arrival times.\n");
 	sort(arrivalTimes.begin(), arrivalTimes.end());
@@ -278,6 +279,9 @@ void Flow::filterCapacity(vector<Flow::Capacity>& capacities)
 			*out++ = *n;
 			lastBandwidth = n->commonBandwidth;
 		}
+	}
+	if (out == capacities.begin()){
+		return;
 	}
 	capacities.erase(out, capacities.end());
 }

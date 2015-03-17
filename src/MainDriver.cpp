@@ -50,6 +50,7 @@ int main(int argc, char* argv[])
 
 	if (arrivalTime.empty()){
 		fprintf(stdout, "This selected stream was empty.\n");
+		return 1;
 	}
 
 	//pass the packets to multiq
@@ -57,9 +58,6 @@ int main(int argc, char* argv[])
 
 	//get calculations from multiQ
 	vector<Flow::Capacity> capacities = multiQFlow.getCapacities();
-
-
-
 
 	delete inputParser;
 
