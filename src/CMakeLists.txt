@@ -4,11 +4,14 @@ project(MultiQ_Metrics)
 
 add_subdirectory(parser)
 add_subdirectory(multiQ)
+add_subdirectory(delimitedTextWriter)
 
 add_executable( mq MainDriver.cpp)
 
 target_link_libraries(mq csvParser )
 target_link_libraries(mq multiQ)
+target_link_libraries(mq dtfWriter)
+
 
 install(TARGETS mq DESTINATION bin)
 

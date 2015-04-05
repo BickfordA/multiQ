@@ -79,6 +79,18 @@ void Histogram::plotPoints(vector<double> values, double kernelWidth, double buc
 	}
 }
 
+list<string> Histogram::bucketStringList()
+{
+	list<string> outStats;
+
+	for(Bucket b: _buckets)
+	{
+		outStats.push_back(to_string(b.start) + "," + to_string(b.stop) + "," + to_string(b.count) + "\n");
+	}
+
+	return outStats;
+}
+
 double Histogram::kdeProbability(int bucketIdx) const
 {
 	return(_buckets[bucketIdx].count / (_totalCount * _kernelWidth));

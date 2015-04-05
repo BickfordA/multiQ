@@ -16,6 +16,14 @@ namespace PacketProperty
 		UNKNOWN //this is the error/catch all type
 	};
 
+	static const char* ProtocolNames[4] = {
+		"TCP",
+		"HTTP",
+		"UDP",
+
+		"UNKNOWN"
+	};
+
 }
 
 class StreamId

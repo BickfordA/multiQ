@@ -40,6 +40,8 @@ public:
 	bool hasError() { return _errMsg.empty(); }
 	std::string errMsg() { return _errMsg; }
 
+	std::list<std::string> streamsFound();
+
 protected:
 	bool parseLine(const std::string& line, Packet& parsedPacket, std::string& errMsg);
 

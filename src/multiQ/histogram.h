@@ -2,7 +2,8 @@
 #define HISTOGRAM_H
 
 #include <vector>
-
+#include <list>
+#include <string>
 
 //
 // Bucket 
@@ -32,7 +33,7 @@ public:
 
 	void plotPoints(std::vector<double> values, double width, double bucketWidth = -18.0);
 	
-
+	std::list<std::string> bucketStringList();
 
 	std::vector<int> modes(double significance, int minPoints);
 

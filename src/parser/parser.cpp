@@ -64,6 +64,25 @@ PacketStream Parser::getStream(std::string source, std::string destination, std:
 	return _packetStreams[query];
 }
 
+list<string> Parser::streamsFound()
+{
+	list<string> out;
+
+	map<StreamId, PacketStream>::iterator streamIt = _packetStreams.begin();
+	
+	while (streamIt != _packetStreams.end()){
+		
+		string source = streamIt->first.source;
+		string destination = streamIt->first.destination;
+		string protocol = ProtocolNames[streamIt->first.type];
+
+		out.push_back(source + " " + destination + " " + protocol);
+		streamIt++;
+	}
+
+	return out;
+}
+
 bool Parser::loadFile()
 {
 	if (!_inputFile->is_open()){
@@ -109,7 +128,6 @@ bool Parser::loadFile()
 
 		_packetStreams[nextPacket.streamId()].appendPacket(nextPacket);
 	}
-
 
 	return true;
 }
