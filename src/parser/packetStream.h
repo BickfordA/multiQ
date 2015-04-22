@@ -22,6 +22,8 @@ public:
 	std::string destination() const { return _streamId.destination; }
 	PacketProperty::Protocol protocol() const { return _streamId.type; }
 
+	std::vector<Packet> getPackets() { return _packetStream; }
+
 private:
 	StreamId _streamId;
 	

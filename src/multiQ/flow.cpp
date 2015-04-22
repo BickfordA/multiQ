@@ -13,8 +13,8 @@ using namespace std;
 // spaces between packets that are unreasonably large
 #define INTERARRIVAL_CUTOFF 35000
 
-#define MIN_SCALE .01 //old default 10 
-#define MAX_SCALE 10000
+#define MIN_SCALE .0005 //old default 10 
+#define MAX_SCALE 1
 #define SCALE_STEP 1.1
 #define SCALE_STEP_NOMODES 1.5
 #define SIGNIFICANCE 2
@@ -30,7 +30,7 @@ struct ModeProbabilityCompare
 	const Histogram hist;
 	ModeProbabilityCompare(const Histogram & histogram) : hist(histogram) { ; }
 
-	inline bool operator()(int buckIdxA, int buckIdxB)
+	inline bool operator()(const int& buckIdxA,const int& buckIdxB) const
 	{
 		return hist.kdeProbability(buckIdxA) < hist.kdeProbability(buckIdxB);
 	}

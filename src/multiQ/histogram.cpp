@@ -91,7 +91,7 @@ list<string> Histogram::bucketStringList()
 	return outStats;
 }
 
-double Histogram::kdeProbability(int bucketIdx) const
+double Histogram::kdeProbability(const int& bucketIdx) const
 {
 	return(_buckets[bucketIdx].count / (_totalCount * _kernelWidth));
 }

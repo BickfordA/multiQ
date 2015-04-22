@@ -2,6 +2,7 @@
 #include "parser.h"
 #include "packetStream.h"
 #include "flow.h"
+#include "bandwidth\bandwidth.h"
 
 #include "delimitedTextWriter/delimitedTextWriter.h"
 
@@ -95,6 +96,22 @@ int main(int argc, char* argv[])
 	//get calculations from multiQ
 	vector<Flow::Capacity> capacities = multiQFlow.getCapacities();
 
-	delete inputParser;
 
+	Bandwidth bw(selectedStream.getPackets());
+	double bandwidth = bw.measureBandwidth();
+
+
+	fprintf(stdout, "The following capacities were found\n");
+
+	for (Flow::Capacity c : capacities){
+		fprintf(stdout, to_string(c.bandwidth).c_str());
+		fprintf(stdout, "\n");
+	}
+
+	fprintf(stdout, "The bandwidth acheived by the flow was:\n");
+	fprintf(stdout, to_string(bandwidth).c_str());
+	fprintf(stdout, "\n");
+
+
+	delete inputParser;
 }
